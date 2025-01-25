@@ -3,11 +3,11 @@ name: CI/CD Pipeline
 
 # ワークフローのトリガーを設定
 on:
-  workflow_dispatch:    # 手動実行のみ可能
+  workflow_dispatch: # 手動実行のみ可能
 
 # グローバルな環境変数の設定
 env:
-  NODE_VERSION: '18'
+  NODE_VERSION: "18"
   CI: true
 
 # 実行するジョブの定義
@@ -25,7 +25,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'  # npmパッケージのキャッシュを有効化
+          cache: "npm" # npmパッケージのキャッシュを有効化
 
       # 依存関係のキャッシュを設定
       - name: Cache dependencies
@@ -38,19 +38,16 @@ jobs:
 
       # 依存関係のインストール（キャッシュがない場合）
       - name: Install dependencies
-        run: npm ci  # 厳密なインストールモードを使用
+        run: npm ci # 厳密なインストールモードを使用
 
       # テストの実行
       - name: Run tests
         run: npm test
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
 
   # ビルドジョブ - テスト完了後に実行
   build:
     name: Build
-    needs: [ test ]  # テストジョブが成功した後に実行
+    needs: [test] # テストジョブが成功した後に実行
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -60,7 +57,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: "npm"
 
       # プロジェクトのビルド
       - name: Build
@@ -71,13 +68,13 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: build-files
-          path: dist/  # ビルド出力ディレクトリ
+          path: dist/ # ビルド出力ディレクトリ
 
   # デプロイジョブ - ビルド完了後に実行
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
-    needs: [ build ]  # ビルドジョブの完了を待つ
+    needs: [build] # ビルドジョブの完了を待つ
     steps:
       # ソースコードのチェックアウト
       - name: Checkout code
@@ -110,8 +107,6 @@ jobs:
           # デプロイに必要な環境変数の設定
           GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/firebase-key.json
           FIREBASE_CLI_EXPERIMENTS: webframeworks
-          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
           ./node_modules/.bin/firebase deploy
 

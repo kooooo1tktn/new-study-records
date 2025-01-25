@@ -33,6 +33,7 @@ firebase-debug.*.log
 .firebaserc
 firebase-key.json
 firebase.json
+new-study-records-84a555b60876.json
 
 # テストカバレッジ
 coverage/
