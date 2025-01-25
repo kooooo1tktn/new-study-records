@@ -1,0 +1,122 @@
+# GitHub Actions のワークフロー名を定義
+name: CI/CD Pipeline
+
+# ワークフローのトリガーを設定
+on:
+  workflow_dispatch:    # 手動実行のみ可能
+
+# グローバルな環境変数の設定
+env:
+  NODE_VERSION: '18'
+  CI: true
+
+# 実行するジョブの定義
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      # ソースコードをチェックアウト
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Node.js環境のセットアップ
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'  # npmパッケージのキャッシュを有効化
+
+      # 依存関係のキャッシュを設定
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      # 依存関係のインストール（キャッシュがない場合）
+      - name: Install dependencies
+        run: npm ci  # 厳密なインストールモードを使用
+
+      # テストの実行
+      - name: Run tests
+        run: npm test
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+
+  # ビルドジョブ - テスト完了後に実行
+  build:
+    name: Build
+    needs: [ test ]  # テストジョブが成功した後に実行
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      # プロジェクトのビルド
+      - name: Build
+        run: npm run build
+
+      # ビルド成果物をアップロード
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-files
+          path: dist/  # ビルド出力ディレクトリ
+
+  # デプロイジョブ - ビルド完了後に実行
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: [ build ]  # ビルドジョブの完了を待つ
+    steps:
+      # ソースコードのチェックアウト
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Node.js環境のセットアップとキャッシュの設定
+      - name: Setup Node.js and cache
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      # Firebase CLIツールのインストール
+      - name: Install firebase-tools
+        run: npm install --save-dev firebase-tools
+
+      # Firebaseサービスアカウントキーのデコードと環境変数の設定
+      - name: Decode Firebase service account key
+        run: |
+          echo "${{ secrets.FIREBASE_KEY }}" | base64 -d > ./firebase-key.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=${{ github.workspace }}/firebase-key.json" >> $GITHUB_ENV
+
+      # Firebaseプロジェクトの切り替え
+      - name: change space
+        run: ./node_modules/.bin/firebase use ${{ secrets.FIREBASE_PROJECT_ID }}
+
+      # Firebaseへのデプロイ実行
+      - name: Deploy to Firebase Hosting
+        env:
+          # デプロイに必要な環境変数の設定
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/firebase-key.json
+          FIREBASE_CLI_EXPERIMENTS: webframeworks
+          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          ./node_modules/.bin/firebase deploy
+
+      # クリーンアップ：認証情報ファイルの削除
+      # always()を使用して、ジョブが失敗しても必ず実行
+      - name: delete GOOGLE_APPLICATION_CREDENTIALS
+        run: rm $GOOGLE_APPLICATION_CREDENTIALS
+        if: ${{ always() }}

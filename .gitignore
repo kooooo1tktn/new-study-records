@@ -24,7 +24,6 @@ dist-ssr
 *.sw?
 *.bak
 .env
-main.yml
 Makefile
 
 # Firebase
@@ -33,6 +32,7 @@ firebase-debug.log
 firebase-debug.*.log
 .firebaserc
 firebase-key.json
+firebase.json
 
 # テストカバレッジ
 coverage/
