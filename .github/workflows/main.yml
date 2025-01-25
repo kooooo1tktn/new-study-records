@@ -8,7 +8,6 @@ on:
 # グローバルな環境変数の設定
 env:
   NODE_VERSION: "18"
-  CI: true
 
 # 実行するジョブの定義
 jobs:
@@ -38,7 +37,7 @@ jobs:
 
       # 依存関係のインストール（キャッシュがない場合）
       - name: Install dependencies
-        run: npm ci # 厳密なインストールモードを使用
+        run: npm install
 
       # テストの実行
       - name: Run tests
