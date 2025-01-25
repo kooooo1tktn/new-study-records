@@ -1,0 +1,66 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.bak
+.env
+main.yml
+Makefile
+
+# Firebase
+.firebase/
+firebase-debug.log
+firebase-debug.*.log
+.firebaserc
+firebase-key.json
+
+# テストカバレッジ
+coverage/
+.nyc_output/
+
+# ビルド関連
+.cache/
+.build/
+build/
+out/
+
+# 環境設定
+.env.*
+!.env.example
+
+# IDEとエディタ
+.history/
+*.code-workspace
+.settings/
+
+# OS生成ファイル
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# その他
+*.temp
+*.tmp
+.cache
