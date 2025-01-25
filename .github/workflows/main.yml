@@ -60,7 +60,7 @@ jobs:
 
       # 型定義のインストールを追加
       - name: Install type definitions
-        run: npm install --save-dev jest @types/jest ts-jest
+        run: npm install --save-dev @types/jest @types/node @types/testing-library__jest-dom
 
       # プロジェクトのビルド
       - name: Build
