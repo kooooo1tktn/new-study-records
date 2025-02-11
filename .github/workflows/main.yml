@@ -3,6 +3,9 @@ name: CI/CD Pipeline
 
 # ワークフローのトリガーを設定
 on:
+  # push: # プッシュ時に実行
+  #   branches:
+  #     - main
   workflow_dispatch: # 手動実行のみ可能
 
 # グローバルな環境変数の設定
