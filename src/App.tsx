@@ -106,7 +106,7 @@ function App() {
         シン・学習記録アプリ
       </Heading>
       <TableContainer>
-        <Table variant="simple">
+        <Table variant="simple" data-testid="table">
           <Thead>
             <Tr>
               <Th colSpan={2}>
