@@ -48,3 +48,14 @@ it('新規登録ボタンがあることを確認', async () => {
   const newRecordButton = screen.getByRole('button', { name: '新規登録' });
   expect(newRecordButton).toBeInTheDocument();
 });
+
+it('タイトルがあることを確認', async () => {
+  render(
+    <ChakraProvider>
+      <App />
+    </ChakraProvider>
+  );
+  await waitFor(() => screen.getByTestId('table'));
+  const title = screen.getByText('シン・学習記録アプリ');
+  expect(title).toBeInTheDocument();
+});
