@@ -37,3 +37,14 @@ it('学習記録を見ることができる', async () => {
   const records = screen.getAllByRole('row');
   expect(records.length - 1).toBe(4);
 });
+
+it('新規登録ボタンがあることを確認', async () => {
+  render(
+    <ChakraProvider>
+      <App />
+    </ChakraProvider>
+  );
+  await waitFor(() => screen.getByTestId('table'));
+  const newRecordButton = screen.getByRole('button', { name: '新規登録' });
+  expect(newRecordButton).toBeInTheDocument();
+});
