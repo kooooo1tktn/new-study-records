@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect } from '@jest/globals';
 import { ChakraProvider } from '@chakra-ui/react';
+import userEvent from '@testing-library/user-event';
 
 import App from '../App';
 import { Record } from '../domain/record';
@@ -12,6 +13,7 @@ const mockGetAllRecords = jest
 jest.mock('../lib/todo', () => {
   return {
     GetAllRecords: () => mockGetAllRecords(),
+    newRecord: jest.fn().mockResolvedValue(null),
   };
 });
 
@@ -58,4 +60,34 @@ it('タイトルがあることを確認', async () => {
   await waitFor(() => screen.getByTestId('table'));
   const title = screen.getByText('シン・学習記録アプリ');
   expect(title).toBeInTheDocument();
+});
+
+it('学習記録を登録できることを確認', async () => {
+  const user = userEvent.setup();
+  render(
+    <ChakraProvider>
+      <App />
+    </ChakraProvider>
+  );
+  // テーブルが表示されるまで待機
+  await waitFor(() => screen.getByTestId('table'));
+
+  // 新規登録ボタンをクリック
+  const newRecordButton = screen.getByRole('button', { name: '新規登録' });
+  await user.click(newRecordButton);
+
+  // フォームに値を入力
+  const titleInput = screen.getByPlaceholderText('学習内容を入力');
+  const timeInput = screen.getByPlaceholderText('0');
+  await user.type(titleInput, 'Reactの学習');
+  await user.type(timeInput, '60');
+
+  // 登録ボタンをクリック
+  const submitButton = screen.getByRole('button', { name: '登録' });
+  await user.click(submitButton);
+
+  // モーダルが閉じたことを確認
+  await waitFor(() => {
+    expect(screen.queryByText('新規登録', { selector: 'header' })).not.toBeInTheDocument();
+  });
 });
