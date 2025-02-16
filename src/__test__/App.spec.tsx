@@ -1,9 +1,17 @@
-import App from "../App";
-import { render, screen } from "@testing-library/react";
+import { render, screen } from '@testing-library/react';
+import { describe, it, expect } from '@jest/globals';
+import { ChakraProvider } from '@chakra-ui/react';
 
-describe("title", () => {
-  it("should render title", () => {
-    render(<App />);
-    expect(screen.getByText("シン・学習記録")).toBeInTheDocument();
+import App from '../App';
+
+describe('App コンポーネント', () => {
+  it('ローディング画面を見ることができる', () => {
+    render(
+      <ChakraProvider>
+        <App />
+      </ChakraProvider>
+    );
+    const spinner = screen.getByRole('status');
+    expect(spinner).toBeInTheDocument();
   });
 });

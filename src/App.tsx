@@ -24,7 +24,7 @@ import {
 } from '@chakra-ui/react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 
-import './App.css';
+import './App';
 import { deleteRecord, GetAllRecords, newRecord } from './lib/todo';
 import { Record } from './domain/record';
 
@@ -63,6 +63,11 @@ function App() {
     getAllRecords();
   }, []);
 
+  // ローディング
+  if (loading) {
+    return <Spinner thickness="6px" speed="0.65s" emptyColor="gray.200" color="gray.500" size="xl" role="status" aria-label="Loading" />;
+  }
+
   const handleModalClose = () => {
     reset(); // フォームをリセット
     onClose(); // モーダルを閉じる
@@ -81,10 +86,6 @@ function App() {
     } catch (error) {
       console.error('登録エラー ', error);
     }
-    // ローディング
-    if (loading) {
-      return <Spinner thickness="6px" speed="0.65s" emptyColor="gray.200" color="gray.500" size="xl" />;
-    }
   };
 
   // 削除処理
@@ -97,7 +98,7 @@ function App() {
     } catch (error) {
       console.error('削除エラー', error);
     }
-  }
+  };
 
   return (
     <>
