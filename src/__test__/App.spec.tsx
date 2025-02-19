@@ -88,6 +88,21 @@ it('学習記録を登録できることを確認', async () => {
 
   // モーダルが閉じたことを確認
   await waitFor(() => {
-    expect(screen.queryByText('新規登録', { selector: 'header' })).not.toBeInTheDocument();
+    const modalHeader = screen.queryByText('新規登録', { selector: 'header.chakra-modal__header' });
+    expect(modalHeader).not.toBeInTheDocument();
   });
+});
+
+it('モーダルが「新規登録」というタイトルになっていることを確認', async () => {
+  const user = userEvent.setup();
+  render(
+    <ChakraProvider>
+      <App />
+    </ChakraProvider>
+  );
+  await waitFor(() => screen.getByTestId('table'));
+  const newRecordButton = screen.getByRole('button', { name: '新規登録' });
+  await user.click(newRecordButton);
+  const modalHeader = screen.getByText('新規登録', { selector: 'header.chakra-modal__header' });
+  expect(modalHeader).toBeInTheDocument();
 });
