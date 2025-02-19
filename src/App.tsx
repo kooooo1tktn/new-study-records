@@ -24,7 +24,7 @@ import {
 } from '@chakra-ui/react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 
-import './App';
+import './App.css';
 import { deleteRecord, GetAllRecords, newRecord } from './lib/todo';
 import { Record } from './domain/record';
 
