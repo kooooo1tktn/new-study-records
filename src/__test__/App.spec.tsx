@@ -122,3 +122,41 @@ it('学習内容がない時に登録するとエラーが出ることを確認'
   const errorMessage = screen.getByText('内容の入力は必須です');
   expect(errorMessage).toBeInTheDocument();
 });
+
+it('学習時間がない時に登録するとエラーが出ることを確認', async () => {
+  const user = userEvent.setup();
+  render(
+    <ChakraProvider>
+      <App />
+    </ChakraProvider>
+  );
+  await waitFor(() => screen.getByTestId('table'));
+  const newRecordButton = screen.getByRole('button', { name: '新規登録' });
+  await user.click(newRecordButton);
+  const titleInput = screen.getByPlaceholderText('学習内容を入力');
+  await user.type(titleInput, 'Reactの学習');
+  const submitButton = screen.getByRole('button', { name: '登録' });
+  await user.click(submitButton);
+  const errorMessage = screen.getByText('時間の入力は必須です');
+  expect(errorMessage).toBeInTheDocument();
+});
+
+it('学習時間が0の時に登録するとエラーが出ることを確認', async () => {
+  const user = userEvent.setup();
+  render(
+    <ChakraProvider>
+      <App />
+    </ChakraProvider>
+  );
+  await waitFor(() => screen.getByTestId('table'));
+  const newRecordButton = screen.getByRole('button', { name: '新規登録' });
+  await user.click(newRecordButton);
+  const titleInput = screen.getByPlaceholderText('学習内容を入力');
+  await user.type(titleInput, 'Reactの学習');
+  const timeInput = screen.getByPlaceholderText('0');
+  await user.type(timeInput, '0');
+  const submitButton = screen.getByRole('button', { name: '登録' });
+  await user.click(submitButton);
+  const errorMessage = screen.getByText('時間は0以上である必要があります');
+  expect(errorMessage).toBeInTheDocument();
+});
