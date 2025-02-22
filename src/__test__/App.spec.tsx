@@ -14,6 +14,7 @@ jest.mock('../lib/todo', () => {
   return {
     GetAllRecords: () => mockGetAllRecords(),
     newRecord: jest.fn().mockResolvedValue(null),
+    deleteRecord: jest.fn().mockResolvedValue(null),
   };
 });
 
@@ -159,4 +160,20 @@ it('学習時間が0の時に登録するとエラーが出ることを確認', 
   await user.click(submitButton);
   const errorMessage = screen.getByText('時間は0以上である必要があります');
   expect(errorMessage).toBeInTheDocument();
+});
+
+it('学習記録を削除できることを確認', async () => {
+  const user = userEvent.setup();
+  render(
+    <ChakraProvider>
+      <App />
+    </ChakraProvider>
+  );
+  await waitFor(() => screen.getByTestId('table'));
+  const deleteButton = screen.getByTestId('delete-button-1');
+  await user.click(deleteButton);
+  await waitFor(() => {
+    const records = screen.getAllByRole('row');
+    expect(records.length - 2).toBe(2);
+  });
 });

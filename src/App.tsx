@@ -163,7 +163,7 @@ function App() {
                   <Td>{record.title}</Td>
                   <Td>{record.time}</Td>
                   <Td>
-                    <Button onClick={() => onClickDelete(record.id)}>
+                    <Button onClick={() => onClickDelete(record.id)} data-testid={`delete-button-${record.id}`}>
                       <MdDelete />
                     </Button>
                   </Td>
