@@ -23,6 +23,7 @@ import {
   useDisclosure,
 } from '@chakra-ui/react';
 import { SubmitHandler, useForm } from 'react-hook-form';
+import { MdDelete } from 'react-icons/md';
 
 import './App.css';
 import { deleteRecord, GetAllRecords, newRecord } from './lib/todo';
@@ -162,7 +163,9 @@ function App() {
                   <Td>{record.title}</Td>
                   <Td>{record.time}</Td>
                   <Td>
-                    <Button onClick={() => onClickDelete(record.id)}>削除</Button>
+                    <Button onClick={() => onClickDelete(record.id)}>
+                      <MdDelete />
+                    </Button>
                   </Td>
                 </Tr>
               );
