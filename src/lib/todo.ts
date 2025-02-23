@@ -27,3 +27,10 @@ export const deleteRecord = async (id: string) => {
   const { error } = await supabase.from('study-record').delete().eq('id', id);
   if (error) throw error;
 };
+
+// 更新処理
+export const updateRecord = async (id: string, title: string, time: number) => {
+  const { data, error } = await supabase.from('study-record').update({ title, time }).eq('id', id);
+  if (error) throw error;
+  return data;
+};
