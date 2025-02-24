@@ -37,9 +37,6 @@ function App() {
   // ローディング状態の管理
   const [loading, setLoading] = useState(true);
 
-  // モーダルの開閉状態管理
-  const { isOpen, onOpen, onClose } = useDisclosure();
-
   // モーダルのフォーカス管理
   const initialRef = useRef<HTMLInputElement>(null);
   const finalRef = useRef<HTMLButtonElement>(null);
@@ -47,8 +44,30 @@ function App() {
   // 編集対象のレコード状態管理
   const [editRecord, setEditRecord] = useState<Record | null>(null);
 
-  // 編集モーダル用の状態管理
-  const { isOpen: isEditOpen, onOpen: onEditOpen, onClose: onEditClose } = useDisclosure();
+  // モーダルの種類を判定するstateを追加
+  const [modalType, setModalType] = useState<'new' | 'edit'>('new');
+
+  // 共通のモーダル状態管理
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
+  // モーダルのOpen処理
+  const handleModalOpen = (record?: Record) => {
+    if (record) {
+      setModalType('edit');
+      setEditRecord(record);
+      reset({ title: record.title, time: record.time });
+    } else {
+      setModalType('new');
+      resetForm();
+    }
+    onOpen();
+  };
+
+  // モーダルのClose処理
+  const handleModalClose = () => {
+    resetForm();
+    onClose();
+  };
 
   // フォームの型定義
   interface RecordForm {
@@ -92,33 +111,21 @@ function App() {
     setEditRecord(null);
   };
 
-  const handleModalClose = () => {
-    resetForm(); // フォームをリセット
-    onClose(); // モーダルを閉じる
-  };
-
-  const handleEditModalClose = () => {
-    resetForm(); // フォームをリセット
-    onEditClose(); // モーダルを閉じる
-  };
-
-  const handleOpenNewRecordModal = () => {
-    resetForm(); // フォームをリセット
-    onOpen(); // モーダルを開く
-  };
-
-  // 新規登録処理
-  const onSubmit: SubmitHandler<RecordForm> = async (data: RecordForm) => {
+  // フォームの送信処理
+  const onSubmitForm: SubmitHandler<RecordForm> = async (data: RecordForm) => {
     try {
-      // supabaseにデータを登録
-      await newRecord(data.title, data.time);
-      // データを再取得してテーブルを更新
+      if (modalType === 'edit' && editRecord) {
+        // 編集処理
+        await updateRecord(editRecord.id, data.title, data.time);
+      } else {
+        // 新規登録処理
+        await newRecord(data.title, data.time);
+      }
       const recordsData = await GetAllRecords();
       setRecords(recordsData);
-      resetForm(); // フォームをリセット
-      onClose(); // モーダルを閉じる
+      handleModalClose();
     } catch (error) {
-      console.error('登録エラー ', error);
+      console.error('エラー ', error);
     }
   };
 
@@ -134,27 +141,6 @@ function App() {
     }
   };
 
-  // 編集処理
-  const onClickEdit = (record: Record) => {
-    setEditRecord(record);
-    onEditOpen();
-    reset({ title: record.title, time: record.time });
-  };
-
-  // 編集データの更新処理
-  const onEditSubmit: SubmitHandler<RecordForm> = async (data) => {
-    if (!editRecord) return;
-    try {
-      await updateRecord(editRecord.id, data.title, data.time);
-      const recordsData = await GetAllRecords();
-      setRecords(recordsData);
-      resetForm();
-      onEditClose();
-    } catch (error) {
-      console.error('更新エラー', error);
-    }
-  };
-
   return (
     <>
       <Heading as="h1" size="3xl">
@@ -164,10 +150,10 @@ function App() {
       <Modal initialFocusRef={initialRef} finalFocusRef={finalRef} isOpen={isOpen} onClose={handleModalClose}>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>新規登録</ModalHeader>
+          <ModalHeader>{modalType === 'edit' ? '記録編集' : '新規登録'}</ModalHeader>
           <ModalCloseButton onClick={handleModalClose} />
           <ModalBody pb={6}>
-            <form onSubmit={handleSubmit(onSubmit)}>
+            <form onSubmit={handleSubmit(onSubmitForm)}>
               <FormControl>
                 <FormLabel>学習内容</FormLabel>
                 <Input type="text" placeholder="学習内容を入力" {...register('title', { required: '内容の入力は必須です' })} />
@@ -188,45 +174,9 @@ function App() {
               </FormControl>
               <ModalFooter>
                 <Button colorScheme="teal" mr={3} type="submit">
-                  登録
+                  {modalType === 'edit' ? '更新' : '登録'}
                 </Button>
                 <Button onClick={handleModalClose}>キャンセル</Button>
-              </ModalFooter>
-            </form>
-          </ModalBody>
-        </ModalContent>
-      </Modal>
-
-      <Modal initialFocusRef={initialRef} finalFocusRef={finalRef} isOpen={isEditOpen} onClose={handleEditModalClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>記録編集</ModalHeader>
-          <ModalCloseButton onClick={handleEditModalClose} />
-          <ModalBody pb={6}>
-            <form onSubmit={handleSubmit(onEditSubmit)}>
-              <FormControl>
-                <FormLabel>学習内容</FormLabel>
-                <Input type="text" placeholder="学習内容を入力" {...register('title', { required: '内容の入力は必須です' })} />
-                <p>{errors.title?.message}</p>
-              </FormControl>
-              <FormControl mt={4}>
-                <FormLabel>学習時間</FormLabel>
-                <Input
-                  type="number"
-                  placeholder="0"
-                  min={0}
-                  {...register('time', {
-                    required: '時間の入力は必須です',
-                    validate: (value) => value > 0 || '時間は0以上である必要があります',
-                  })}
-                />
-                <p>{errors.time?.message}</p>
-              </FormControl>
-              <ModalFooter>
-                <Button colorScheme="teal" mr={3} type="submit">
-                  更新
-                </Button>
-                <Button onClick={handleEditModalClose}>キャンセル</Button>
               </ModalFooter>
             </form>
           </ModalBody>
@@ -238,7 +188,7 @@ function App() {
           <Thead>
             <Tr>
               <Th colSpan={2}>
-                <Button colorScheme="teal" mb={4} onClick={handleOpenNewRecordModal}>
+                <Button colorScheme="teal" mb={4} onClick={() => handleModalOpen()}>
                   新規登録
                 </Button>
               </Th>
@@ -255,7 +205,7 @@ function App() {
                   <Td>{record.title}</Td>
                   <Td>{record.time}</Td>
                   <Td>
-                    <Button mr={4} onClick={() => onClickEdit(record)} data-testid={`edit-button-${record.id}`}>
+                    <Button mr={4} onClick={() => handleModalOpen(record)} data-testid={`edit-button-${record.id}`}>
                       <MdEdit />
                     </Button>
                     <Button onClick={() => onClickDelete(record.id)} data-testid={`delete-button-${record.id}`}>
