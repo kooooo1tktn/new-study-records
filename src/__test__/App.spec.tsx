@@ -177,3 +177,17 @@ it('学習記録を削除できることを確認', async () => {
     expect(records.length - 2).toBe(2);
   });
 });
+
+it('モーダルのタイトルが「記録編集」であることを確認', async () => {
+  const user = userEvent.setup();
+  render(
+    <ChakraProvider>
+      <App />
+    </ChakraProvider>
+  );
+  await waitFor(() => screen.getByTestId('table'));
+  const editButton = screen.getByTestId('edit-button-1');
+  await user.click(editButton);
+  const modalHeader = screen.getByText('記録編集', { selector: 'header.chakra-modal__header' });
+  expect(modalHeader).toBeInTheDocument();
+});

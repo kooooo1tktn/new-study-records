@@ -121,6 +121,7 @@ function App() {
         // 新規登録処理
         await newRecord(data.title, data.time);
       }
+      // データを再取得してテーブルを更新
       const recordsData = await GetAllRecords();
       setRecords(recordsData);
       handleModalClose();
