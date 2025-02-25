@@ -15,6 +15,10 @@ jest.mock('../lib/todo', () => {
     GetAllRecords: () => mockGetAllRecords(),
     newRecord: jest.fn().mockResolvedValue(null),
     deleteRecord: jest.fn().mockResolvedValue(null),
+    updateRecord: jest.fn().mockImplementation((id: string, title: string, time: number) => {
+      mockGetAllRecords.mockResolvedValue([new Record(id, title, time), new Record('2', 'Reactの学習2', 60), new Record('3', 'Reactの学習3', 60)]);
+      return Promise.resolve(null);
+    }),
   };
 });
 
@@ -190,4 +194,30 @@ it('モーダルのタイトルが「記録編集」であることを確認', a
   await user.click(editButton);
   const modalHeader = screen.getByText('記録編集', { selector: 'header.chakra-modal__header' });
   expect(modalHeader).toBeInTheDocument();
+});
+
+it('学習記録を編集して登録すると更新されることを確認', async () => {
+  const user = userEvent.setup();
+  render(
+    <ChakraProvider>
+      <App />
+    </ChakraProvider>
+  );
+  await waitFor(() => screen.getByTestId('table'));
+  const editButton = screen.getByTestId('edit-button-1');
+  await user.click(editButton);
+  const titleInput = screen.getByPlaceholderText('学習内容を入力');
+  const timeInput = screen.getByPlaceholderText('0');
+  await user.clear(titleInput);
+  await user.clear(timeInput);
+  await user.type(titleInput, 'Test1');
+  await user.type(timeInput, '90');
+  const submitButton = screen.getByRole('button', { name: '更新' });
+  await user.click(submitButton);
+  await waitFor(() => {
+    const updatedTitle = screen.getByText('Test1');
+    const updatedTime = screen.getByText('90');
+    expect(updatedTitle).toBeInTheDocument();
+    expect(updatedTime).toBeInTheDocument();
+  });
 });
