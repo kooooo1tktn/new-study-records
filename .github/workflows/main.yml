@@ -1,4 +1,3 @@
-# GitHub Actions のワークフロー名を定義
 name: CI/CD Pipeline
 
 # ワークフローのトリガーを設定
@@ -14,11 +13,12 @@ env:
 
 # 実行するジョブの定義
 jobs:
-  test:
-    name: Test
+  # ビルドジョブ
+  build:
+    name: Build
     runs-on: ubuntu-latest
     steps:
-      # ソースコードをチェックアウト
+      # ソースコードのチェックアウト
       - name: Checkout code
         uses: actions/checkout@v3
 
@@ -27,7 +27,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm' # npmパッケージのキャッシュを有効化
+          cache: 'npm'
 
       # 依存関係のキャッシュを設定
       - name: Cache dependencies
@@ -38,30 +38,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
-      # 依存関係のインストール（キャッシュがない場合）
+      # 依存関係のインストール
       - name: Install dependencies
         run: npm install
 
-      # テストの実行
-      - name: Run tests
-        run: npm test
-
-  # ビルドジョブ - テスト完了後に実行
-  build:
-    name: Build
-    needs: [test] # テストジョブが成功した後に実行
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      # 型定義のインストールを追加
+      # 型定義のインストール
       - name: Install type definitions
         run: npm install --save-dev @types/jest @types/node @types/testing-library__jest-dom
 
@@ -79,21 +60,56 @@ jobs:
           name: build-files
           path: dist/ # ビルド出力ディレクトリ
 
-  # デプロイジョブ - ビルド完了後に実行
-  deploy:
-    name: Deploy
-    runs-on: ubuntu-latest
+  # テストジョブ - ビルド完了後に実行
+  test:
+    name: Test
     needs: [build] # ビルドジョブの完了を待つ
+    runs-on: ubuntu-latest
     steps:
       # ソースコードのチェックアウト
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # Node.js環境のセットアップ
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      # 依存関係のインストール
+      - name: Install dependencies
+        run: npm install
+
+      # テストの実行
+      - name: Run tests
+        run: npm test
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+
+  # デプロイジョブ - テスト完了後に実行
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: [test] # テストジョブの完了を待つ
+    steps:
+      # ソースコードのチェックアウト
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # ビルド成果物をダウンロード
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-files
+          path: dist
+
       # Node.js環境のセットアップとキャッシュの設定
       - name: Setup Node.js and cache
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
       # Firebase CLIツールのインストール
@@ -113,16 +129,14 @@ jobs:
       # Firebaseへのデプロイ実行
       - name: Deploy to Firebase Hosting
         env:
-          # デプロイに必要な環境変数の設定
           GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/firebase-key.json
           FIREBASE_CLI_EXPERIMENTS: webframeworks
           VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          ./node_modules/.bin/firebase deploy
+          ./node_modules/.bin/firebase deploy --only hosting
 
       # クリーンアップ：認証情報ファイルの削除
-      # always()を使用して、ジョブが失敗しても必ず実行
       - name: delete GOOGLE_APPLICATION_CREDENTIALS
         run: rm $GOOGLE_APPLICATION_CREDENTIALS
         if: ${{ always() }}
